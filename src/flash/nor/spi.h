@@ -82,6 +82,7 @@ extern const struct flash_device flash_devices[];
 /* SPI Flash Commands */
 #define SPIFLASH_READ_ID		0x9F /* Read Flash Identification */
 #define SPIFLASH_READ_MID		0xAF /* Read Flash Identification, multi-io */
+#define SPIFLASH_WRITE_STATUS	0x01 /* Write Status Register */
 #define SPIFLASH_READ_STATUS	0x05 /* Read Status Register */
 #define SPIFLASH_WRITE_ENABLE	0x06 /* Write Enable */
 #define SPIFLASH_PAGE_PROGRAM	0x02 /* Page Program */

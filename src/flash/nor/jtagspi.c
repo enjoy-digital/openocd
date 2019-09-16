@@ -427,8 +427,69 @@ static int jtagspi_info(struct flash_bank *bank, char *buf, int buf_size)
 	return ERROR_OK;
 }
 
+COMMAND_HANDLER(jtagspi_handle_qe_command)
+{
+	uint32_t status;
+	struct flash_bank *bank;
+	int retval;
+	uint8_t buf[10];
+	if (CMD_ARGC < 2)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	retval = CALL_COMMAND_HANDLER(flash_command_get_bank, 0, &bank);
+	if (ERROR_OK != retval)
+		return retval;
+
+	jtagspi_read_status(bank, &status);
+	printf("av0 STATUS: %08x\n", status);
+
+	retval = jtagspi_write_enable(bank);
+	if (retval != ERROR_OK)
+		return retval;
+
+	jtagspi_read_status(bank, &status);
+	printf("av STATUS: %08x\n", status);
+
+	if(CMD_ARGV[1][0] == '1')
+	  buf[0] = 0x42;
+	else
+	  buf[0] = 0x2;
+
+	jtagspi_cmd(bank, SPIFLASH_WRITE_STATUS, NULL, buf, 8);
+
+	retval = jtagspi_wait(bank, JTAGSPI_MAX_TIMEOUT);
+
+	jtagspi_read_status(bank, &status);
+	printf("ap STATUS: %08x\n", status);
+
+	return ERROR_OK;
+}
+
+static const struct command_registration jtagspi_exec_command_handlers[] = {
+	{
+		.name = "set_qe",
+		.handler = jtagspi_handle_qe_command,
+		.mode = COMMAND_EXEC,
+		.usage = "set Quad Enable bit",
+		.help = "set QE bit for macronix.",
+	},
+	COMMAND_REGISTRATION_DONE
+};
+
+static const struct command_registration jtagspi_command_handlers[] = {
+	{
+		.name = "jtagspi",
+		.mode = COMMAND_ANY,
+		.help = "jtagspi flash command group",
+		.usage = "",
+		.chain = jtagspi_exec_command_handlers,
+	},
+	COMMAND_REGISTRATION_DONE
+};
+
 const struct flash_driver jtagspi_flash = {
 	.name = "jtagspi",
+	.commands = jtagspi_command_handlers,
 	.flash_bank_command = jtagspi_flash_bank_command,
 	.erase = jtagspi_erase,
 	.protect = jtagspi_protect,
